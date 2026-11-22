@@ -1,0 +1,9 @@
+// Konfigurasi Cloudflare Workers (aset statis). Folder web/ dibangun oleh
+// `python3 alat/bangun_web.py`; nama harus sama dengan nama proyek di Cloudflare.
+{
+  "name": "penerjemah-banjar",
+  "compatibility_date": "2025-06-01",
+  "assets": {
+    "directory": "./web"
+  }
+}

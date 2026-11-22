@@ -89,6 +89,12 @@ Membangun secara lokal: `python3 alat/bangun_web.py` → folder `web/` (hanya bu
 standar, tanpa pustaka tambahan). Tautan berbagi didukung, mis.
 `/?dari=bjn&ke=en&teks=Ulun+handak+tulak` atau `/?dari=id&ke=bjn&ragam=halus&teks=...`.
 
+Lewat alur **Workers** (Create app → Continue with GitHub), isi:
+- Project name: `penerjemah-banjar` (harus sama dengan `name` di `wrangler.jsonc`)
+- Build command: `python3 alat/bangun_web.py`
+- Deploy command: `npx wrangler deploy`
+- Preview command: `npx wrangler versions upload`
+
 ## Pasang di HP (PWA, tanpa Play Store)
 
 Aplikasi ini adalah *Progressive Web App*: buka di Chrome Android → menu ⋮ → **Instal aplikasi**
