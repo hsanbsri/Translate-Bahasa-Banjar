@@ -46,6 +46,20 @@ Bila satu bentuk Banjar berasal dari beberapa kata Indonesia (mis. *banar* ← s
 dipilih: kata yang sama persis, lalu entri yang bentuk utamanya cocok, lalu varian, lalu bentuk
 halus; sisanya ditampilkan sebagai "bisa juga" saat kursor diarahkan ke kata.
 
+## Dua cara berjalan
+
+| | Web publik (statis) | Server lokal (pengelola) |
+|---|---|---|
+| Terjemahan | di browser (`static/mesin.js`) | sama, di browser |
+| Bahasa lain | browser → MyMemory langsung | sama |
+| Banjar ↔ Indonesia tanpa internet | ya (setelah dibuka/dipasang sekali) | ya |
+| Tinjau Kamus, usulan, catatan kata tak dikenal | disembunyikan | aktif |
+| Hosting | Cloudflare Pages (gratis) | komputer sendiri |
+
+`static/mesin.js` adalah salinan setia mesin Python (`app/`). `tests/test_paritas.py`
+menjalankan ±60 ribu kata & kalimat di kedua versi dan mewajibkan hasilnya identik, jadi
+setiap perubahan aturan harus dilakukan di keduanya.
+
 ## Menjalankan
 
 ```bash
@@ -57,6 +71,21 @@ python3 -m venv venv
 Buka http://127.0.0.1:8000
 
 Menjalankan tes: `./venv/bin/python -m pytest -q`
+
+## Hosting gratis di Cloudflare Pages
+
+Cloudflare Pages → *Create* → *Connect to Git* → pilih repo ini, lalu isi:
+
+| Pengaturan | Nilai |
+|---|---|
+| Framework preset | None |
+| Build command | `python3 alat/bangun_web.py` |
+| Build output directory | `web` |
+
+Setiap `git push` ke `main` otomatis membangun ulang situs (termasuk kamus terbaru).
+Membangun secara lokal: `python3 alat/bangun_web.py` → folder `web/` (hanya butuh Python
+standar, tanpa pustaka tambahan). Tautan berbagi didukung, mis.
+`/?dari=bjn&ke=en&teks=Ulun+handak+tulak` atau `/?dari=id&ke=bjn&ragam=halus&teks=...`.
 
 ## Pasang di HP (PWA, tanpa Play Store)
 
@@ -79,12 +108,16 @@ dari HP, server perlu di-hosting dengan alamat HTTPS. Berkas terkait: `static/ma
 | `app/kamus.py` | Pemuat & pencari kamus |
 | `app/morfologi.py` | Analisis & pembentukan imbuhan, dua arah (Indonesia ↔ Banjar) |
 | `app/mesin.py` | Mesin terjemah: `Mesin` (Indonesia → Banjar) & `MesinBalik` (Banjar → Indonesia) |
+| `static/mesin.js` | Mesin yang sama dalam JavaScript (dipakai antarmuka) |
+| `static/sumber.js` | Bahasa lain ↔ Indonesia dari browser (MyMemory) |
+| `app/data_web.py` | Ekspor kamus ke JSON (`/data/*.json`) |
+| `alat/bangun_web.py` | Bangun versi statis ke `web/` |
 | `app/sumber.py` | Bahasa lain ↔ Indonesia lewat layanan luar (MyMemory, cadangan Google) |
 | `app/saran.py` | Penyimpanan usulan perbaikan & kata yang belum dikenal (SQLite) |
 | `app/tinjau.py` | Antrean Tinjau Kamus |
 | `alat/` | Pembuat kandidat kamus (NusaX, NLLB) |
 | `app/main.py` | Server API (FastAPI) |
-| `static/` | Antarmuka web (HTML/CSS/JS tanpa framework) |
+| `static/` | Antarmuka web (HTML/CSS/JS tanpa framework, tanpa pustaka luar) |
 | `tests/` | Pengujian otomatis |
 
 ## API
@@ -180,5 +213,5 @@ Kandidat hanyalah draf: setiap entri kamus diputuskan oleh peninjau manusia.
 - [ ] Pilihan dialek Banjar Hulu
 - [x] Arah sebaliknya: Banjar → Indonesia / bahasa lain
 - [x] Bisa dipasang di Android sebagai PWA (tanpa Play Store)
-- [ ] Hosting online ber-HTTPS agar bisa dipasang dari HP mana pun
+- [x] Versi statis untuk hosting gratis (Cloudflare Pages)
 - [ ] Mode luring penuh untuk tahap 1 (model terjemah lokal)

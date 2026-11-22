@@ -1,8 +1,29 @@
-"use strict";
+// Antarmuka Penerjemah Banjar. Terjemahan berjalan di browser (mesin.js); bahasa lain
+// lewat MyMemory (sumber.js). Fitur pengelolaan (Tinjau Kamus, usulan, catatan kata tak
+// dikenal) hanya aktif bila dijalankan lewat server lokal (data/info.json: mode "server").
+import { bangunMesin, gabung } from "./mesin.js";
+import { BATAS_KARAKTER, terjemahLuar } from "./sumber.js";
 
 const $ = (id) => document.getElementById(id);
-let terakhir = null; // respons terjemahan terakhir
-let namaBahasa = {};  // kode -> nama, diisi dari /api/info
+let terakhir = null;      // hasil terjemahan terakhir
+let namaBahasa = {};      // kode -> nama, diisi dari data/info.json
+let modeServer = false;   // true = server lokal (pengelolaan aktif); false = hosting statis
+let data = null;          // { kamus, mesin, balik }
+let kamusBerubah = false; // kamus diubah lewat Tinjau Kamus -> muat ulang sebelum dipakai
+
+async function muatData() {
+  const ambil = async (nama) => {
+    const r = await fetch(`data/${nama}`, { cache: "no-cache" });
+    if (!r.ok) throw new Error(`Gagal memuat ${nama}`);
+    return r.json();
+  };
+  const [kamus, khusus, kataId] = await Promise.all(
+    [ambil("kamus.json"), ambil("khusus.json"), ambil("kata_id_umum.json")]
+  );
+  data = bangunMesin(kamus, khusus, kataId);
+  kamusBerubah = false;
+  $("versi").textContent = `Versi ${namaBahasa.__versi || ""} · ${data.kamus.ukuran} entri kamus`;
+}
 
 const LABEL_JENIS = {
   kata: "dari kamus",
@@ -125,6 +146,47 @@ function tampilkanHasil(data) {
   $("tombol-usul").disabled = !data.hasil;
 }
 
+const unik = (xs) => [...new Set(xs)].sort();
+
+async function jalankanTerjemah(teks, sumber, sasaran, ragam) {
+  if ((sumber === BJN) === (sasaran === BJN)) throw new Error("Salah satu bahasa (asal atau tujuan) harus Banjar.");
+  if (teks.length > BATAS_KARAKTER) throw new Error(`Teks terlalu panjang (maks ${BATAS_KARAKTER} karakter).`);
+  if (!data || kamusBerubah) await muatData();
+
+  let teksId, terdeteksi, segmen, hasil;
+  const arah = sasaran === BJN ? "ke_banjar" : "dari_banjar";
+  if (arah === "ke_banjar") {
+    // bahasa apa pun -> Indonesia -> Banjar
+    if (sumber === "id") [teksId, terdeteksi] = [teks, "id"];
+    else ({ hasil: teksId, terdeteksi } = await terjemahLuar(teks, sumber, "id"));
+    segmen = data.mesin.terjemah(teksId, ragam);
+    hasil = gabung(segmen);
+  } else {
+    // Banjar -> Indonesia -> bahasa tujuan
+    terdeteksi = BJN;
+    segmen = data.balik.terjemah(teks);
+    teksId = gabung(segmen);
+    hasil = sasaran === "id" ? teksId : (await terjemahLuar(teksId, "id", sasaran)).hasil;
+  }
+  const takDikenal = unik(segmen.filter((s) => s.jenis === "tak_dikenal").map((s) => s.asal.toLowerCase()));
+  const dianggapSama = unik(segmen.filter((s) => s.jenis === "sama").map((s) => s.asal.toLowerCase()));
+
+  if (modeServer) {
+    // catat kata yang belum dikenal sebagai bahan perluasan kamus (tidak menghambat tampilan)
+    const kata = arah === "ke_banjar" ? takDikenal : [...takDikenal, ...dianggapSama];
+    if (kata.length) {
+      api("/api/kata-tak-dikenal", {
+        method: "POST", body: JSON.stringify({ kata, bahasa: arah === "ke_banjar" ? "id" : BJN }),
+      }).catch(() => {});
+    }
+  }
+  return {
+    arah, sumber, sasaran, sumber_terdeteksi: terdeteksi, teks_indonesia: teksId, hasil, segmen,
+    segmen_adalah_hasil: sasaran === BJN || sasaran === "id",
+    tak_dikenal: takDikenal, dianggap_sama: dianggapSama, teks_asal: teks,
+  };
+}
+
 async function terjemahkan() {
   const teks = $("masukan").value;
   if (!teks.trim()) return;
@@ -134,11 +196,7 @@ async function terjemahkan() {
   $("galat").hidden = true;
   try {
     const ragam = document.querySelector('input[name="ragam"]:checked').value;
-    terakhir = await api("/api/terjemah", {
-      method: "POST",
-      body: JSON.stringify({ teks, sumber: $("sumber").value, sasaran: $("sasaran").value, ragam }),
-    });
-    terakhir.teks_asal = teks;
+    terakhir = await jalankanTerjemah(teks, $("sumber").value, $("sasaran").value, ragam);
     tampilkanHasil(terakhir);
   } catch (e) {
     $("galat").textContent = e.message;
@@ -203,14 +261,14 @@ $("dialog-usul").addEventListener("close", async () => {
 // ------------------------------------------------------------------ kamus
 let jedaCari = null;
 async function muatKamus() {
-  const q = $("cari-kamus").value;
-  const baris = await api(`/api/kamus?q=${encodeURIComponent(q)}&batas=200`);
+  if (!data || kamusBerubah) await muatData();
+  const baris = data.kamus.telusur($("cari-kamus").value, 200);
   const tbody = $("isi-kamus");
   tbody.replaceChildren(
     ...baris.map((e) => {
       const tr = document.createElement("tr");
       const banjar = [e.banjar, ...e.varian].join(" / ");
-      for (const isi of [e.indonesia, banjar, e.banjar_halus, e.banjar_kasar, e.catatan]) {
+      for (const isi of [e.indonesia, banjar, e.banjarHalus, e.banjarKasar, e.catatan]) {
         const td = document.createElement("td");
         td.textContent = isi;
         tr.append(td);
@@ -366,6 +424,7 @@ async function putuskan(keputusan) {
       }),
     });
     tampilStatistik(d.statistik);
+    kamusBerubah = true;
     // kata turunan bisa jadi sudah terjemahkan oleh entri baru: buang dari antrean lokal
     tinjau.antrean = [];
     await lanjut();
@@ -382,6 +441,7 @@ async function batalkanTerakhir() {
   try {
     const d = await api("/api/tinjau/batal", { method: "POST" });
     tampilStatistik(d.statistik);
+    kamusBerubah = true;
     tinjau.antrean = [];
     if (tinjau.kini) tinjau.lewati.delete(tinjau.kini.indonesia);
     await isiAntrean();
@@ -439,19 +499,38 @@ document.addEventListener("keydown", (e) => {
 // ------------------------------------------------------------------ awal
 (async function mulai() {
   try {
-    const info = await api("/api/info");
-    namaBahasa = { ...info.bahasa, [BJN]: "Banjar" };
+    const r = await fetch("data/info.json", { cache: "no-cache" });
+    const info = await r.json();
+    modeServer = info.mode === "server";
+    namaBahasa = { ...info.bahasa, [BJN]: "Banjar", __versi: info.versi };
     isiPilihanBahasa(info.bahasa);
-    $("versi").textContent = `Versi ${info.versi} · ${info.jumlah_entri_kamus} entri kamus`;
+    // hosting statis: sembunyikan fitur pengelolaan yang butuh server
+    document.querySelector('.tab button[data-panel="panel-tinjau"]').hidden = !modeServer;
+    $("tombol-usul").hidden = !modeServer;
+    await muatData();
   } catch (e) {
-    $("galat").textContent = "Server tidak dapat dihubungi.";
+    $("galat").textContent = "Data aplikasi gagal dimuat. Periksa koneksi lalu muat ulang halaman.";
     $("galat").hidden = false;
+    return;
   }
+  // tautan berbagi: ?dari=bjn&ke=en&teks=...&ragam=halus -> isi otomatis lalu terjemahkan
+  const q = new URLSearchParams(location.search);
+  if (q.get("teks")) {
+    for (const [param, id] of [["dari", "sumber"], ["ke", "sasaran"]]) {
+      const nilai = q.get(param);
+      if (nilai && [...$(id).options].some((o) => o.value === nilai)) { $(id).value = nilai; aturArah($(id)); }
+    }
+    const ragam = document.querySelector(`input[name="ragam"][value="${q.get("ragam")}"]`);
+    if (ragam) ragam.checked = true;
+    $("masukan").value = q.get("teks").slice(0, BATAS_KARAKTER);
+    $("hitung").textContent = `${$("masukan").value.length} / ${BATAS_KARAKTER}`;
+    terjemahkan();
+  }
+  // buka tab langsung lewat alamat, mis. http://127.0.0.1:8000/#tinjau
+  const tabAwal = { "#kamus": "panel-kamus", "#tinjau": "panel-tinjau" }[location.hash];
+  const tombol = tabAwal && document.querySelector(`.tab button[data-panel="${tabAwal}"]`);
+  if (tombol && !tombol.hidden) tombol.click();
 })();
-
-// buka tab langsung lewat alamat, mis. http://127.0.0.1:8000/#tinjau
-const tabAwal = { "#kamus": "panel-kamus", "#tinjau": "panel-tinjau" }[location.hash];
-if (tabAwal) document.querySelector(`.tab button[data-panel="${tabAwal}"]`)?.click();
 
 // ------------------------------------------------------------------ PWA (pasang sebagai aplikasi)
 if ("serviceWorker" in navigator) {

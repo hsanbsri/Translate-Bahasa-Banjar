@@ -1,13 +1,20 @@
-// Service worker: membuat aplikasi bisa dipasang (PWA) dan tampilannya tetap terbuka saat luring.
+// Service worker: membuat aplikasi bisa dipasang (PWA) dan tetap berfungsi saat luring
+// (mesin & kamus di-cache, jadi Banjar <-> Indonesia bisa tanpa internet).
 // Strategi "jaringan dulu": selalu ambil versi terbaru dari server; cache hanya dipakai bila
-// jaringan putus. Panggilan /api/ tidak pernah di-cache (terjemahan selalu dari server).
+// jaringan putus. Panggilan /api/ (pengelolaan di server lokal) tidak pernah di-cache.
 
-const CACHE = "penerjemah-banjar-v1";
+const CACHE = "penerjemah-banjar-v2";
 const KERANGKA = [
   "/",
   "/index.html",
   "/style.css",
   "/app.js",
+  "/mesin.js",
+  "/sumber.js",
+  "/data/info.json",
+  "/data/kamus.json",
+  "/data/khusus.json",
+  "/data/kata_id_umum.json",
   "/manifest.webmanifest",
   "/ikon/ikon-192.png",
   "/ikon/ikon-512.png",

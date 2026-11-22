@@ -14,7 +14,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import sumber
+from . import VERSI, data_web, sumber
 from .kamus import Kamus, lokasi_kamus
 from .mesin import Mesin, MesinBalik, gabung
 from .saran import Penyimpan
@@ -31,7 +31,7 @@ mesin_balik = MesinBalik(kamus)
 penyimpan = Penyimpan()
 tinjauan = Tinjauan(kamus, mesin, lokasi_kamus())
 
-app = FastAPI(title="Penerjemah Banjar", version="0.3.0")
+app = FastAPI(title="Penerjemah Banjar", version=VERSI)
 
 
 class PermintaanTerjemah(BaseModel):
@@ -165,6 +165,40 @@ def batal_tinjau():
     if terakhir is None:
         raise HTTPException(400, "Tidak ada keputusan untuk dibatalkan.")
     return {"dibatalkan": terakhir, "statistik": tinjauan.statistik()}
+
+
+# ------------------------------------------------------------------ data untuk mesin JavaScript
+# Alamat yang sama dipakai versi statis (alat/bangun_web.py menulis berkas dengan nama ini),
+# sehingga antarmuka tidak perlu tahu apakah ia berjalan di server ini atau di hosting statis.
+@app.get("/data/info.json")
+def data_info():
+    return {"mode": "server", "versi": app.version, "bahasa": sumber.BAHASA}
+
+
+@app.get("/data/kamus.json")
+def data_kamus():
+    return data_web.baris_kamus(kamus)
+
+
+@app.get("/data/khusus.json")
+def data_khusus():
+    return data_web.khusus(mesin_balik)
+
+
+@app.get("/data/kata_id_umum.json")
+def data_kata_id():
+    return data_web.kata_id(mesin_balik)
+
+
+class LaporanTakDikenal(BaseModel):
+    kata: list[str] = Field(..., max_length=500)
+    bahasa: Literal["id", "bjn"] = "id"
+
+
+@app.post("/api/kata-tak-dikenal")
+def lapor_tak_dikenal(p: LaporanTakDikenal):
+    penyimpan.catat_tak_dikenal([k[:100] for k in p.kata if k.strip()], bahasa=p.bahasa)
+    return {"dicatat": len(p.kata)}
 
 
 app.mount("/", StaticFiles(directory=AKAR / "static", html=True), name="static")
