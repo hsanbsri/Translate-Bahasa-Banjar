@@ -1,0 +1,18 @@
+Hak Cipta (c) 2026 Hasan. Seluruh hak dilindungi.
+Copyright (c) 2026 Hasan. All rights reserved.
+
+Program komputer "Penerjemah Banjar" ini, termasuk kode sumber, tampilan, ikon,
+dan kamus Indonesia-Banjar yang disusun di dalamnya, adalah ciptaan Hasan.
+
+Kode sumber ditampilkan secara publik agar dapat dilihat dan dipelajari.
+Menyalin, mengubah, menerbitkan ulang, menjual, atau menggunakan program ini
+untuk kepentingan komersial memerlukan izin tertulis dari pencipta.
+Menggunakan aplikasi web yang sudah diterbitkan untuk menerjemahkan teks
+tidak memerlukan izin.
+
+Komponen pihak ketiga tetap tunduk pada lisensinya masing-masing:
+- data/kata_id_umum.txt diturunkan dari FrequencyWords (hermitdave,
+  OpenSubtitles 2018) dan berlisensi CC-BY-SA 4.0.
+- Kandidat kata diperoleh dengan bantuan korpus NusaX-MT (Winata dkk., 2022),
+  CC-BY-SA 4.0.
+Rincian sumber ada di README.md bagian "Sumber data & lisensi".

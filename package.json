@@ -1,5 +1,7 @@
 {
   "name": "penerjemah-banjar",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "author": "Hasan",
+  "license": "SEE LICENSE IN LICENSE"
 }

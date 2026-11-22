@@ -4,6 +4,8 @@ Aplikasi web untuk menerjemahkan teks **dari berbagai bahasa ke bahasa Banjar** 
 **dari bahasa Banjar ke berbagai bahasa**, dengan pilihan ragam **biasa** (aku/ikam),
 **halus** (ulun/pian), dan **kasar** (unda/nyawa).
 
+Hak Cipta © 2026 **Hasan**. Seluruh hak dilindungi; lihat [LICENSE](LICENSE).
+
 ## Cara kerja
 
 ```
@@ -215,3 +217,10 @@ Kandidat hanyalah draf: setiap entri kamus diputuskan oleh peninjau manusia.
 - [x] Bisa dipasang di Android sebagai PWA (tanpa Play Store)
 - [x] Versi statis untuk hosting gratis (Cloudflare Pages)
 - [ ] Mode luring penuh untuk tahap 1 (model terjemah lokal)
+
+## Hak cipta
+
+Hak Cipta © 2026 Hasan. Seluruh hak dilindungi.
+Kode sumber, tampilan, ikon, dan kamus Indonesia–Banjar adalah ciptaan Hasan.
+Penggunaan ulang, perubahan, atau penggunaan komersial memerlukan izin tertulis;
+komponen pihak ketiga tetap mengikuti lisensinya masing-masing (lihat [LICENSE](LICENSE)).
