@@ -3,6 +3,7 @@
 {
   "name": "penerjemah-banjar",
   "compatibility_date": "2025-06-01",
+  "workers_dev": true,
   "assets": {
     "directory": "./web"
   }
