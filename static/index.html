@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Penerjemah Banjar</title>
+  <meta name="theme-color" content="#0e7480">
+  <meta name="description" content="Terjemahkan dari dan ke bahasa Banjar">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="32x32" href="ikon/favicon-32.png">
+  <link rel="apple-touch-icon" href="ikon/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Banjar">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="kepala">
+    <div class="judul">
+      <div>
+        <h1>Penerjemah Banjar</h1>
+        <p class="sub">Dari dan ke bahasa Banjar</p>
+      </div>
+      <button id="tombol-pasang" class="utama" hidden>Pasang aplikasi</button>
+    </div>
+    <nav class="tab" role="tablist">
+      <button role="tab" aria-selected="true" data-panel="panel-terjemah">Terjemah</button>
+      <button role="tab" aria-selected="false" data-panel="panel-kamus">Kamus</button>
+      <button role="tab" aria-selected="false" data-panel="panel-tinjau">Tinjau Kamus</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ============================ TERJEMAH ============================ -->
+    <section id="panel-terjemah" class="panel" role="tabpanel">
+      <div class="kendali">
+        <label>Dari
+          <select id="sumber"></select>
+        </label>
+        <button id="tombol-tukar" class="tukar" title="Tukar arah" aria-label="Tukar arah terjemahan">⇄</button>
+        <label>Ke
+          <select id="sasaran"></select>
+        </label>
+        <div class="ragam" id="ragam" role="radiogroup" aria-label="Ragam bahasa Banjar">
+          <label><input type="radio" name="ragam" value="biasa" checked> Biasa</label>
+          <label><input type="radio" name="ragam" value="halus"> Halus</label>
+          <label><input type="radio" name="ragam" value="kasar"> Kasar</label>
+        </div>
+      </div>
+
+      <div class="kotak-ganda">
+        <div class="kotak">
+          <textarea id="masukan" rows="6" maxlength="4500" dir="auto"
+            placeholder="Ketik teks di sini… contoh: Saya mau pergi ke pasar membeli ikan."></textarea>
+          <div class="bawah">
+            <span id="hitung">0 / 4500</span>
+            <button id="tombol-terjemah" class="utama">Terjemahkan</button>
+          </div>
+        </div>
+
+        <div class="kotak keluaran">
+          <div id="hasil" class="hasil" aria-live="polite" dir="auto"><span class="samar">Hasil terjemahan muncul di sini.</span></div>
+          <div class="bawah">
+            <button id="tombol-salin" disabled>Salin</button>
+            <button id="tombol-usul" disabled>Usulkan perbaikan</button>
+          </div>
+        </div>
+      </div>
+
+      <p id="perantara" class="perantara" hidden></p>
+      <p id="galat" class="galat" hidden></p>
+
+      <details class="legenda">
+        <summary>Arti warna pada hasil</summary>
+        <ul>
+          <li><span class="seg seg-kata">kata</span> ditemukan di kamus</li>
+          <li><span class="seg seg-frasa">frasa</span> ungkapan beberapa kata</li>
+          <li><span class="seg seg-imbuhan">imbuhan</span> dibentuk dari kata dasar + imbuhan</li>
+          <li><span class="seg seg-sama">dianggap sama</span> (Banjar → lain) tidak ada di kamus, diasumsikan sama dengan bahasa Indonesia</li>
+          <li><span class="seg seg-tak_dikenal">belum dikenal</span> belum ada di kamus, dibiarkan apa adanya</li>
+        </ul>
+      </details>
+    </section>
+
+    <!-- ============================ KAMUS ============================ -->
+    <section id="panel-kamus" class="panel" role="tabpanel" hidden>
+      <input id="cari-kamus" type="search" placeholder="Cari kata Indonesia atau Banjar…" autocomplete="off">
+      <p id="info-kamus" class="samar"></p>
+      <table class="tabel-kamus">
+        <thead><tr><th>Indonesia</th><th>Banjar</th><th>Halus</th><th>Kasar</th><th>Catatan</th></tr></thead>
+        <tbody id="isi-kamus"></tbody>
+      </table>
+    </section>
+    <!-- ============================ TINJAU ============================ -->
+    <section id="panel-tinjau" class="panel" role="tabpanel" hidden>
+      <div class="kemajuan">
+        <div class="batang"><div id="batang-isi"></div></div>
+        <span id="info-tinjau" class="samar"></span>
+      </div>
+
+      <div id="kartu-tinjau" class="kartu-tinjau" hidden>
+        <div class="kata-id" id="t-kata"></div>
+        <div class="lencana" id="t-lencana"></div>
+
+        <div class="pilihan" id="t-usulan"></div>
+
+        <label class="isian">Terjemahan Banjar
+          <input id="t-banjar" autocomplete="off" spellcheck="false"
+                 placeholder="ketik atau pilih usulan; varian dipisah |">
+        </label>
+        <div class="isian-ganda">
+          <label class="isian">Bentuk halus (opsional)
+            <input id="t-halus" autocomplete="off" spellcheck="false">
+          </label>
+          <label class="isian">Bentuk kasar (opsional)
+            <input id="t-kasar" autocomplete="off" spellcheck="false">
+          </label>
+        </div>
+
+        <div class="contoh" id="t-contoh" hidden>
+          <div><span class="samar">ID:</span> <span id="t-contoh-id"></span></div>
+          <div><span class="samar">BJN:</span> <span id="t-contoh-bjn"></span></div>
+        </div>
+
+        <div class="aksi">
+          <button id="t-simpan" class="utama">Simpan <kbd>Enter</kbd></button>
+          <button id="t-sama">Sama dgn Indonesia <kbd>S</kbd></button>
+          <button id="t-lewati">Lewati <kbd>L</kbd></button>
+          <button id="t-buang">Buang <kbd>B</kbd></button>
+          <button id="t-batal">Batalkan terakhir <kbd>Z</kbd></button>
+        </div>
+        <p class="samar kecil">
+          <kbd>1</kbd>…<kbd>5</kbd> pilih usulan · <kbd>E</kbd> edit isian · <kbd>Esc</kbd> keluar dari isian ·
+          <b>Lewati</b> = tunda ke sesi berikutnya ·
+          <b>Buang</b> = bukan kata yang perlu masuk kamus (nama, singkatan, salah ketik)
+        </p>
+      </div>
+
+      <p id="t-kosong" class="samar" hidden></p>
+      <p id="t-galat" class="galat" hidden></p>
+    </section>
+  </main>
+
+  <dialog id="dialog-usul">
+    <form method="dialog" id="form-usul">
+      <h2>Usulkan perbaikan</h2>
+      <p class="samar">Usulan disimpan untuk memperbaiki kamus.</p>
+      <label>Hasil mesin<textarea id="usul-mesin" rows="2" readonly></textarea></label>
+      <label>Terjemahan yang benar<textarea id="usul-benar" rows="3" required></textarea></label>
+      <label>Catatan (opsional)<input id="usul-catatan" maxlength="1000"></label>
+      <div class="bawah">
+        <button value="batal" formnovalidate>Batal</button>
+        <button value="kirim" class="utama">Kirim</button>
+      </div>
+    </form>
+  </dialog>
+
+  <footer class="kaki">
+    <span id="versi"></span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

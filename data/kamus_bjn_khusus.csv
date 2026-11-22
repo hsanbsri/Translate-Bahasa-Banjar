@@ -1,0 +1,9 @@
+# Kamus khusus arah Banjar -> Indonesia: bentuk percakapan, ejaan santai, dan partikel.
+# Kolom: banjar, indonesia, catatan
+# - indonesia kosong = partikel yang dihilangkan dalam terjemahan Indonesia
+# - entri di sini didahulukan daripada kamus utama
+banjar,indonesia,catatan
+am,,partikel penegas
+ai,,partikel penegas
+pang,,partikel penegas
+neh,,partikel (seperti 'nih'); perlu cek

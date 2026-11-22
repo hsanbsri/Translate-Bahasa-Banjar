@@ -1,0 +1,12 @@
+venv/
+venv-alat/
+__pycache__/
+.pytest_cache/
+data/*.db
+
+# data mentah & turunan yang bisa dibuat ulang lewat alat/ (lihat README)
+sumber_data/
+data/kandidat.csv
+
+# hasil bangun untuk hosting statis
+web/
